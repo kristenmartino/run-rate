@@ -1,0 +1,12 @@
+{
+  "name": "run-rate",
+  "private": true,
+  "description": "Run Rate: a phone-first study app for revenue leadership (sales, RevOps, customer success, marketing, the Chief Revenue Officer chair), published as a claude.ai artifact. Engines from study-kit.",
+  "scripts": {
+    "build": "node build.js",
+    "record": "node build.js --record",
+    "test": "node build.js && node test.js"
+  },
+  "devDependencies": { "playwright": "1.63.0" },
+  "engines": { "node": ">=20" }
+}
