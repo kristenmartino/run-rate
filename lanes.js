@@ -19,18 +19,26 @@ module.exports = {
       blurb: 'Onboarding and time to value, health scores, renewals and expansion, churn, QBRs, coverage models.' },
     { id: 'marketing', name: 'Marketing (including Chief Marketing Officer)', short: 'Marketing', active: false, leveled: true, color: '--s-pink',
       blurb: 'The eight AMA PCM Marketing Management domains with a timed mock, and the executive marketing chair: brand, budget, board reporting.' },
-    { id: 'chief-revenue-officer', name: 'Chief Revenue Officer (CRO)', short: 'Chief Revenue Officer', active: false, leveled: true, color: '--s-lilac',
+    { id: 'chief-revenue-officer', name: 'Chief Revenue Officer (CRO)', short: 'Chief Revenue Officer', active: true, leveled: true, color: '--s-lilac',
       blurb: 'Revenue operating cadence, the annual revenue plan, go-to-market motion, aligning sales, marketing and customer success, unit economics, org design.' }
   ],
-  // Built sections, by lane. Section ids are link ids (lane-section) and never change once published. None yet (Phase 0):
-  // section ids are claimed when a phase's outline is approved, so no id is published before its content is agreed.
-  sections: {},
+  // Built sections, by lane. Section ids are link ids (lane-section) and never change once published. Ids are claimed when
+  // a phase's outline is approved. Phase 1 (approved Nov 28, decisions 2 and 6): sales-forecasting, sales-forecast-call,
+  // chief-revenue-officer-cadence, chief-revenue-officer-forecast-call.
+  sections: {
+    sales: [
+      { id: 'forecasting', title: 'Sales forecasting', kind: 'Deck', phase: 1, deck: 'fc1' },
+      { id: 'forecast-call', title: 'The forecast call', kind: 'Simulation', phase: 1, route: '#run-rtn-1' }
+    ],
+    'chief-revenue-officer': [
+      { id: 'cadence', title: 'Revenue operating cadence', kind: 'Deck', phase: 1, deck: 'rc1' },
+      { id: 'forecast-call', title: 'The forecast call', kind: 'Simulation', phase: 1, route: '#run-rtn-1' }
+    ]
+  },
   // Planned topics shown on a lane screen until they are built. Text only: no link ids. From the plan's lane list and
-  // phases (Read, claude/revenue-cro-app-plan.md). Phase 1 is the taster awaiting approval.
+  // phases (Read, claude/revenue-cro-app-plan.md). Built topics move to sections.
   planned: {
     sales: [
-      { title: 'Sales forecasting', kind: 'Deck', phase: 1 },
-      { title: 'The forecast call', kind: 'Simulation', phase: 1 },
       { title: 'Pipeline stages and exit criteria', kind: 'Deck', phase: 2 },
       { title: 'Qualification frameworks (BANT, MEDDICC, SPICED)', kind: 'Deck', phase: 2 },
       { title: 'Sales methodology (Challenger, SPIN, solution selling, Command of the Message)', kind: 'Deck', phase: 2 },
@@ -57,8 +65,6 @@ module.exports = {
       { title: 'The Chief Marketing Officer’s job', kind: 'Deck', phase: 3 }
     ],
     'chief-revenue-officer': [
-      { title: 'Revenue operating cadence', kind: 'Deck', phase: 1 },
-      { title: 'The forecast call', kind: 'Simulation', phase: 1 },
       { title: 'Annual revenue plan, go-to-market motion, alignment, unit economics, org design', kind: 'Decks', phase: 4 },
       { title: 'Craft packets and role-plays', kind: 'Practice', phase: 4 }
     ]
