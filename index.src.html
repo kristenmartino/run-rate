@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Run Rate</title>
+<style>
+__SHELL_CSS__
+__KIT_CSS__
+/* Run Rate additions (from Throughput's shell) */
+.lanelist { display: grid; gap: 10px; }
+.lanebtn { appearance: none; width: 100%; text-align: left; cursor: pointer; background: var(--sheet); color: var(--ink);
+  border: 1px solid var(--rule); border-left: 6px solid var(--deck); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 4px; min-height: 64px; }
+.lanebtn:hover:not(:disabled) { border-color: var(--marker); border-left-color: var(--deck); }
+.lanebtn:disabled { cursor: default; opacity: .6; border-left-style: dashed; }
+.lanebtn .nm { font-weight: 700; font-size: 16px; line-height: 1.25; overflow-wrap: anywhere; }
+.lanebtn .bl { color: var(--muted); font-size: 14px; line-height: 1.35; }
+.lanebtn .st { font-family: var(--f-mono); font-size: 12px; color: var(--marker); font-weight: 600; }
+.lanebtn:disabled .st { color: var(--muted); }
+.secrow { display: grid; gap: 4px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.secrow:last-child { border-bottom: 0; }
+.secrow .top { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; justify-content: space-between; }
+.secrow b { font-size: 16px; overflow-wrap: anywhere; }
+.secrow .k { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.soon { font-family: var(--f-mono); font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); white-space: nowrap; }
+.foot { color: var(--muted); font-size: 13px; display: grid; gap: 6px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>const BANK = __BANK__;</script>
+<script>__STUDY_KIT__</script>
+<script>
+(function () {
+  'use strict';
+  const K = window.StudyKit, app = document.getElementById('app');
+  const APP = 'run-rate';
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[c]));
+  const X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const LANES = BANK.lanes, SECTIONS = BANK.sections, PLANNED = BANK.planned;
+  const laneById = id => LANES.find(l => l.id === id);
+  let SCREEN = 'home', VIEW = {}, SAMPLE = null;
+
+  // ---- preferences (last lane, level filter): one small document, data/users/<uid>/prefs, saved with study-kit's store
+  const keep = ok => x => { const o = {}; if (!x || typeof x !== 'object') return o; for (const k in x) if (ok(k) && x[k] && typeof x[k] === 'object' && typeof x[k].ts === 'number') o[k] = JSON.parse(JSON.stringify(x[k])); return o; };
+  const prefs = K.save.createStore({
+    localKey: APP + ':prefs:v1', doc: 'prefs', field: 'prefs', normalize: keep(k => k === 'lane' || k === 'levels'),
+    onRemote() { if (SCREEN === 'home' || SCREEN === 'lane') host.keepScroll(); },
+    onStatus() { const el = document.getElementById('prefs-saved'); if (el) el.textContent = prefs.statusText(); }
+  });
+  prefs.loadLocal();
+
+  // ---- theme (this device only)
+  const THEME_KEY = APP + ':theme';
+  function theme() { try { return localStorage.getItem(THEME_KEY) || 'system'; } catch (e) { return 'system'; } }
+  function applyTheme(t) { if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme'); }
+  applyTheme(theme());
+
+  const host = {
+    esc,
+    screen: () => SCREEN,
+    view: () => VIEW,
+    go(screen, view) { SCREEN = screen; VIEW = view || {}; render(); window.scrollTo(0, 0); },
+    render: () => render(),
+    keepScroll() { const y = window.scrollY; render(); window.scrollTo(0, y); },
+    paint(html) { app.innerHTML = html; },
+    header: (title, act, id, label, meta) => '<div class="playtop"><div class="wrap"><button class="iconbtn" data-act="' + act + '"' + (id ? ' data-id="' + esc(id) + '"' : '') + ' aria-label="' + esc(label) + '">' + X + '</button><h1 class="ttl">' + esc(title) + '</h1><span class="meta">' + esc(meta || '') + '</span></div></div>',
+    listHeader: title => '<div class="playtop"><div class="wrap"><button class="iconbtn" data-act="home" aria-label="Back to start">' + X + '</button><h1 class="ttl">' + esc(title) + '</h1><span class="meta"></span></div></div>',
+    sampler: () => SAMPLE,
+    samplerGone() { SAMPLE = null; },
+    toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); },
+    // In-page dialog: the claude.ai artifact frame refuses window.confirm (it returns without asking), so a native
+    // confirm would make every confirmed action do nothing there (found on Throughput's live page, Nov 24).
+    confirm(title, body, ok, cb) {
+      const prev = document.activeElement, d = document.createElement('div');
+      d.className = 'cfm'; d.setAttribute('role', 'alertdialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-labelledby', 'cfm-t'); d.setAttribute('aria-describedby', 'cfm-b');
+      d.innerHTML = '<div class="cfm-box"><h2 id="cfm-t">' + esc(title) + '</h2><p id="cfm-b">' + esc(body) + '</p><div class="row"><button class="btn btn-primary" data-cfm="ok">' + esc(ok || 'OK') + '</button><button class="btn" data-cfm="cancel">Cancel</button></div></div>';
+      const close = yes => { d.remove(); document.removeEventListener('keydown', key, true); if (prev && prev.focus) try { prev.focus(); } catch (e) {} if (yes) cb(); };
+      const key = e => { if (e.key === 'Escape') { e.preventDefault(); close(false); } else if (e.key === 'Tab') { const b = d.querySelectorAll('button'); if (e.shiftKey ? document.activeElement === b[0] : document.activeElement === b[b.length - 1]) { e.preventDefault(); (e.shiftKey ? b[b.length - 1] : b[0]).focus(); } } };
+      d.addEventListener('click', e => { const t = e.target.closest('[data-cfm]'); if (t) close(t.dataset.cfm === 'ok'); else if (e.target === d) close(false); });
+      document.addEventListener('keydown', key, true); document.body.appendChild(d); d.querySelector('[data-cfm="cancel"]').focus();
+    },
+    copy(text, msg) { try { navigator.clipboard.writeText(text).then(() => host.toast(msg), () => host.toast(text)); } catch (e) { host.toast(text); } },
+    linkBase: '',
+    lessonTitle: () => null,
+    fmtDate: ts => { try { return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (e) { return ''; } },
+    icon: { ok: '✓', bad: '✗' }
+  };
+
+  // Engines: role-play rules and scoring options all on, as in Inspect & Adapt, Blast Radius and Throughput.
+  const craft = K.craft.create({ packets: BANK.craft, appKey: APP, keyStyle: 'slug', domain: 'revenue and go-to-market', factsSubject: 'pipeline, customers, data or people', host });
+  const sims = K.sims.create({ runs: BANK.runs, roleplays: BANK.roleplays, appKey: APP, runNoun: 'Simulation', rpHeading: 'Role-plays', host,
+    roleplay: { learner: 'revenue leader', rules: ['guarded', 'noCoaching', 'noUnpromptedOffer'], scoring: ['outcomeAgreesWithScore', 'verifiedQuotes'] } });
+
+  // ---- level filter: Director / VP / C-level, one saved preference ('levels'). Items with no tags always show.
+  const LEVELS = BANK.levels, ALL = LEVELS.map(l => l.id);
+  function levels() { const p = prefs.get('levels'); const v = p && Array.isArray(p.v) ? p.v.filter(x => ALL.indexOf(x) !== -1) : []; return v.length ? v : ALL.slice(); }
+  function levelFilter() {
+    const on = levels();
+    return '<section aria-labelledby="lv-h"><div class="section-h"><h2 id="lv-h">Level</h2><span class="hint">Shows items tagged for the levels you pick</span></div>' +
+      '<div class="toggles" role="group" aria-label="Level filter">' + LEVELS.map(l => '<button class="tog" data-act="level" data-id="' + l.id + '" aria-pressed="' + (on.indexOf(l.id) !== -1) + '" title="' + esc(l.scope) + '">' + esc(l.name) + '</button>').join('') + '</div>' +
+      '<p class="note" style="margin-top:8px">' + LEVELS.filter(l => on.indexOf(l.id) !== -1).map(l => '<b>' + esc(l.name) + '</b>: ' + esc(l.scope).toLowerCase()).join('. ') + '.</p></section>';
+  }
+
+  function renderHome() {
+    const last = prefs.get('lane');
+    app.innerHTML = '<header class="mast"><div class="wrap"><div class="brand">Run Rate</div><p class="sub">Revenue leadership: sales, RevOps, customer success, marketing and the Chief Revenue Officer.</p>' +
+      '<div class="pills"><span class="pill">study-kit <b>' + esc(BANK.kitVersion) + '</b></span><span class="pill" id="prefs-saved">' + esc(prefs.statusText()) + '</span></div></div></header>' +
+      '<main class="wrap">' +
+      '<section aria-labelledby="ln-h"><div class="section-h"><h2 id="ln-h">Lanes</h2><span class="hint">Built in this order</span></div><div class="lanelist">' +
+      LANES.map(l => '<button class="lanebtn" style="--deck:var(' + l.color + ')" data-act="lane" data-id="' + l.id + '"' + (l.active ? '' : ' disabled aria-disabled="true"') + '>' +
+        '<span class="nm">' + esc(l.name) + '</span><span class="bl">' + esc(l.blurb) + '</span>' +
+        '<span class="st">' + (l.active ? (last && last.v === l.id ? 'Open · last visited' : 'Open') : 'Later') + '</span></button>').join('') +
+      '</div></section>' + foot() + '</main>';
+  }
+  function renderLane() {
+    const l = laneById(VIEW.id);
+    if (!l || !l.active) return host.go('home', {});
+    const secs = SECTIONS[l.id] || [], plan = PLANNED[l.id] || [];
+    app.innerHTML = host.header(l.short, 'home', '', 'Back to lanes', '') +
+      '<main class="wrap"><section class="card" style="display:grid;gap:10px"><h2 class="ttl" style="font-size:19px">' + esc(l.name) + '</h2><p class="note">' + esc(l.blurb) + '</p>' +
+      (BANK.exam[l.id] ? '<p class="note"><b>The exam:</b> ' + esc(BANK.exam[l.id]) + '</p>' : '') + '</section>' + (l.leveled ? levelFilter() : '') +
+      (secs.length ? '<section aria-labelledby="sc-h"><div class="section-h"><h2 id="sc-h">Sections</h2></div><div class="card" style="padding-block:4px">' +
+        secs.map(s => '<div class="secrow" id="' + esc(l.id + '-' + s.id) + '"><div class="top"><b>' + esc(s.title) + '</b></div><span class="k">' + esc(s.kind) + '</span></div>').join('') + '</div></section>' : '') +
+      (plan.length ? '<section aria-labelledby="pl-h"><div class="section-h"><h2 id="pl-h">Planned</h2><span class="hint">Not built yet</span></div><div class="card" style="padding-block:4px">' +
+        plan.map(p => '<div class="secrow planrow"><div class="top"><b>' + esc(p.title) + '</b><span class="soon">Phase ' + p.phase + '</span></div><span class="k">' + esc(p.kind) + '</span></div>').join('') + '</div></section>' : '') +
+      foot() + '</main>';
+  }
+  function foot() {
+    const t = theme();
+    return '<footer class="foot"><div class="row"><span>Theme:</span>' + ['system', 'light', 'dark'].map(x => '<button class="tog" data-act="theme" data-id="' + x + '" aria-pressed="' + (t === x) + '">' + x[0].toUpperCase() + x.slice(1) + '</button>').join('') + '</div>' +
+      '<p>Engines: study-kit ' + esc(BANK.kitVersion) + '. Claude grading and role-plays work when this page is open in Claude; everything else works without it.</p></footer>';
+  }
+
+  const SCREENS = Object.assign({ home: renderHome, lane: renderLane }, craft.screens, sims.screens);
+  const ACT = Object.assign({
+    home() { history.replaceState(null, '', location.pathname + location.search); host.go('home', {}); },
+    lane(t) { const l = laneById(t.dataset.id); if (!l || !l.active) return; prefs.put('lane', { ts: Date.now(), v: l.id }); history.replaceState(null, '', '#lane-' + l.id); host.go('lane', { id: l.id }); },
+    level(t) { const id = t.dataset.id, on = levels(), i = on.indexOf(id); if (i === -1) on.push(id); else if (on.length > 1) on.splice(i, 1); else return host.toast('Keep at least one level on.'); prefs.put('levels', { ts: Date.now(), v: ALL.filter(x => on.indexOf(x) !== -1) }); host.keepScroll(); },
+    theme(t) { try { localStorage.setItem(THEME_KEY, t.dataset.id); } catch (e) { /* storage unavailable */ } applyTheme(t.dataset.id); host.keepScroll(); }
+  }, craft.actions, sims.actions);
+  function render() { (SCREENS[SCREEN] || renderHome)(); }
+
+  // Routes: dash form only (#lane-sales). Craft and Simulations route their own (#craft, #sims).
+  function route(h) {
+    const m = /^#lane-([a-z0-9-]+)$/.exec(h || '');
+    if (m) { const l = laneById(m[1]); if (l && l.active) { host.go('lane', { id: l.id }); return true; } host.go('home', {}); return true; }
+    return craft.route(h) || sims.route(h);
+  }
+  document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t || t.disabled) return; const fn = ACT[t.dataset.act]; if (fn) fn(t, e); });
+  document.addEventListener('input', e => { craft.onInput(e) || sims.onInput(e); });
+  document.addEventListener('toggle', e => { craft.onToggle(e); }, true);
+  window.addEventListener('pagehide', () => craft.onPageHide());
+  window.addEventListener('hashchange', () => route(location.hash));
+
+  craft.start(); sims.start();
+  if (!(location.hash && route(location.hash))) render();
+
+  // Claude capabilities: sample (grading, role-plays), db and user (saving to the account).
+  (async () => {
+    const C = window.claude;
+    if (!C || typeof C.use !== 'function') return;
+    try { const fn = await C.use('sample'); if (typeof fn === 'function') { SAMPLE = fn; if (SCREEN !== 'home' && SCREEN !== 'lane') host.keepScroll(); } } catch (e) { /* not granted */ }
+    try {
+      const db = await C.use('db'), user = await C.use('user'), uid = user && await user.id();
+      if (db && uid) { prefs.attach(db, uid); craft.attach(db, uid); sims.attach(db, uid); if (SCREEN === 'home' || SCREEN === 'lane') host.keepScroll(); }
+    } catch (e) { /* saved on this device only */ }
+  })();
+  window.__rr = { craft, sims, prefs, host };
+})();
+</script>
+</body>
+</html>

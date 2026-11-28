@@ -1,0 +1,18 @@
+{
+ "note": "Link ids already published (lanes, sections, craft, sims, lessons, questions, cards, decks, games). Links from other apps depend on them; never remove or rename one. Run `node build.js --record` after a publish.",
+ "lanes": [
+  "sales",
+  "revops",
+  "customer-success",
+  "marketing",
+  "chief-revenue-officer"
+ ],
+ "sections": [],
+ "craft": [],
+ "sims": [],
+ "lessons": [],
+ "questions": [],
+ "cards": [],
+ "decks": [],
+ "games": []
+}
