@@ -7,7 +7,7 @@
 <style>
 __SHELL_CSS__
 __KIT_CSS__
-/* Run Rate additions (from Throughput's shell) */
+/* Run Rate additions (shell and deck screens from Throughput) */
 .lanelist { display: grid; gap: 10px; }
 .lanebtn { appearance: none; width: 100%; text-align: left; cursor: pointer; background: var(--sheet); color: var(--ink);
   border: 1px solid var(--rule); border-left: 6px solid var(--deck); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 4px; min-height: 64px; }
@@ -21,34 +21,75 @@ __KIT_CSS__
 .secrow:last-child { border-bottom: 0; }
 .secrow .top { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; justify-content: space-between; }
 .secrow b { font-size: 16px; overflow-wrap: anywhere; }
-.secrow .k { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.k { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
 .soon { font-family: var(--f-mono); font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); white-space: nowrap; }
+.items { display: grid; gap: 8px; margin-top: 6px; }
+.itemrow { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 10px; background: var(--board); color: var(--ink); text-decoration: none; min-height: 44px; }
+.itemrow:hover { border-color: var(--marker); }
+.itemrow .top { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; justify-content: space-between; }
+.itemrow b { font-size: 15.5px; overflow-wrap: anywhere; }
+.prose p { font-size: 16px; line-height: 1.55; }
+.stem { font-size: 17px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.src { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; overflow-wrap: anywhere; }
+.lvchip { font-family: var(--f-mono); font-size: 11.5px; padding: 2px 7px; border-radius: 999px; background: var(--sunk); color: var(--muted); }
+.stat { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.stat > div { background: var(--board); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.stat .v { font-family: var(--f-display); font-weight: 780; font-size: 22px; line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.stat .l { color: var(--muted); font-size: 13px; }
+.flash { min-height: 150px; display: grid; gap: 10px; align-content: center; text-align: center; }
+.flash .front { font-family: var(--f-display); font-weight: 780; font-size: 22px; overflow-wrap: anywhere; }
+.flash .back { font-size: 16.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.scroll { overflow-x: auto; }
+table.t { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+table.t th, table.t td { padding: 6px 8px; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
+table.t th:first-child, table.t td:first-child { text-align: left; }
+table.t th { font-weight: 600; color: var(--muted); font-size: 13px; }
 .foot { color: var(--muted); font-size: 13px; display: grid; gap: 6px; }
+/* Forecast call */
+.deal { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--rule); border-radius: 12px; background: var(--sheet); }
+.deal .hd { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; justify-content: space-between; }
+.deal .hd b { font-size: 16px; overflow-wrap: anywhere; }
+.deal .amt { font-family: var(--f-display); font-weight: 760; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.deal .facts { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13.5px; color: var(--muted); }
+.deal .note { font-size: 14.5px; line-height: 1.45; overflow-wrap: anywhere; }
+.cats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.cats .tog { min-height: 44px; white-space: normal; padding: 6px 4px; text-align: center; }
+.chk { white-space: nowrap; }
+.chk.y { color: var(--ok, inherit); } .chk.n { color: var(--warn); }
+.left { font-size: 13.5px; color: var(--muted); }
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script>const BANK = __BANK__;</script>
 <script>__STUDY_KIT__</script>
+<script>__FC_ENGINE__</script>
 <script>
 (function () {
   'use strict';
-  const K = window.StudyKit, app = document.getElementById('app');
+  const K = window.StudyKit, FE = window.ForecastEngine, app = document.getElementById('app');
   const APP = 'run-rate';
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[c]));
   const X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-  const LANES = BANK.lanes, SECTIONS = BANK.sections, PLANNED = BANK.planned;
+  const LANES = BANK.lanes, SECTIONS = BANK.sections, PLANNED = BANK.planned, DECKS = BANK.decks, FCB = BANK.forecast, FD = FCB.data;
   const laneById = id => LANES.find(l => l.id === id);
+  const deckById = id => DECKS.find(d => d.id === id);
+  const QS = {}, LESSONS = {}, CARDS = {};
+  DECKS.forEach(d => { d.questions.forEach(q => { QS[q.id] = Object.assign({ deck: d.id }, q); }); d.lessons.forEach(l => { LESSONS[l.id] = Object.assign({ deck: d.id }, l); }); d.cards.forEach(c => { CARDS[c.id] = Object.assign({ deck: d.id }, c); }); });
+  const usd = d => '$' + Math.round(d).toLocaleString('en-US');
   let SCREEN = 'home', VIEW = {}, SAMPLE = null;
 
-  // ---- preferences (last lane, level filter): one small document, data/users/<uid>/prefs, saved with study-kit's store
+  // ---- stores (study-kit's save helper): prefs, deck progress, the forecast call
+  const status = () => { for (const [id, s] of [['prefs-saved', prefs], ['deck-saved', decks], ['fc-saved', fc]]) { const el = document.getElementById(id); if (el && s) el.textContent = s.statusText(); } };
   const keep = ok => x => { const o = {}; if (!x || typeof x !== 'object') return o; for (const k in x) if (ok(k) && x[k] && typeof x[k] === 'object' && typeof x[k].ts === 'number') o[k] = JSON.parse(JSON.stringify(x[k])); return o; };
-  const prefs = K.save.createStore({
-    localKey: APP + ':prefs:v1', doc: 'prefs', field: 'prefs', normalize: keep(k => k === 'lane' || k === 'levels'),
-    onRemote() { if (SCREEN === 'home' || SCREEN === 'lane') host.keepScroll(); },
-    onStatus() { const el = document.getElementById('prefs-saved'); if (el) el.textContent = prefs.statusText(); }
-  });
-  prefs.loadLocal();
+  const prefs = K.save.createStore({ localKey: APP + ':prefs:v1', doc: 'prefs', field: 'prefs', normalize: keep(k => k === 'lane' || k === 'levels'),
+    onRemote() { if (SCREEN === 'home' || SCREEN === 'lane') host.keepScroll(); }, onStatus: () => status() });
+  const decks = K.save.createStore({ localKey: APP + ':decks:v1', doc: 'decks', field: 'decks', normalize: keep(k => !!(QS[k] || CARDS[k])),
+    onRemote() { if (['deck', 'lesson', 'lane', 'cards'].indexOf(SCREEN) !== -1) host.keepScroll(); }, onStatus: () => status() });
+  // The forecast call: the run in progress ('game': categories chosen at each call so far), the last finished run and the best score.
+  const fc = K.save.createStore({ localKey: APP + ':fc:v1', doc: 'fc', field: 'fc', normalize: keep(k => /^(game|last|best)$/.test(k)),
+    onRemote() { if (SCREEN === 'fc' || SCREEN === 'lane') host.keepScroll(); }, onStatus: () => status() });
+  prefs.loadLocal(); decks.loadLocal(); fc.loadLocal();
 
   // ---- theme (this device only)
   const THEME_KEY = APP + ':theme';
@@ -82,7 +123,7 @@ __KIT_CSS__
     },
     copy(text, msg) { try { navigator.clipboard.writeText(text).then(() => host.toast(msg), () => host.toast(text)); } catch (e) { host.toast(text); } },
     linkBase: '',
-    lessonTitle: () => null,
+    lessonTitle: id => (LESSONS[id] || {}).title || null,
     fmtDate: ts => { try { return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (e) { return ''; } },
     icon: { ok: '✓', bad: '✗' }
   };
@@ -93,14 +134,25 @@ __KIT_CSS__
     roleplay: { learner: 'revenue leader', rules: ['guarded', 'noCoaching', 'noUnpromptedOffer'], scoring: ['outcomeAgreesWithScore', 'verifiedQuotes'] } });
 
   // ---- level filter: Director / VP / C-level, one saved preference ('levels'). Items with no tags always show.
+  const draftChip = x => x && x.status === 'Draft' ? '<span class="cchip draft">Draft</span>' : '';
   const LEVELS = BANK.levels, ALL = LEVELS.map(l => l.id);
   function levels() { const p = prefs.get('levels'); const v = p && Array.isArray(p.v) ? p.v.filter(x => ALL.indexOf(x) !== -1) : []; return v.length ? v : ALL.slice(); }
+  const showFor = x => { if (!x || !x.levels) return true; const on = levels(); return x.levels.some(v => on.indexOf(v) !== -1); };
+  const vis = arr => arr.filter(showFor);
+  const levelName = id => (LEVELS.find(l => l.id === id) || {}).name || id;
+  const lvChips = ids => ids ? ids.map(id => '<span class="lvchip">' + esc(levelName(id)) + '</span>').join('') : '';
+  const hiddenNote = n => n ? '<p class="note">' + n + ' more hidden by the level filter.</p>' : '';
   function levelFilter() {
     const on = levels();
     return '<section aria-labelledby="lv-h"><div class="section-h"><h2 id="lv-h">Level</h2><span class="hint">Shows items tagged for the levels you pick</span></div>' +
       '<div class="toggles" role="group" aria-label="Level filter">' + LEVELS.map(l => '<button class="tog" data-act="level" data-id="' + l.id + '" aria-pressed="' + (on.indexOf(l.id) !== -1) + '" title="' + esc(l.scope) + '">' + esc(l.name) + '</button>').join('') + '</div>' +
       '<p class="note" style="margin-top:8px">' + LEVELS.filter(l => on.indexOf(l.id) !== -1).map(l => '<b>' + esc(l.name) + '</b>: ' + esc(l.scope).toLowerCase()).join('. ') + '.</p></section>';
   }
+  const itemRow = (href, title, meta, st, lv) => '<a class="itemrow" href="' + esc(href) + '"><span class="top"><b>' + esc(title) + '</b>' + draftChip({ status: st }) + '</span>' + (meta ? '<span class="k">' + esc(meta) + '</span>' : '') + (lv ? '<span class="row">' + lvChips(lv) + '</span>' : '') + '</a>';
+  // Deck progress: a question counts as right if its last answer was right. Counts follow the level filter.
+  const qRec = id => decks.get(id);
+  const deckStats = d => { const qs = vis(d.questions), cs = vis(d.cards), seen = qs.filter(q => qRec(q.id)), right = seen.filter(q => qRec(q.id).last === 1); const got = cs.filter(c => (decks.get(c.id) || {}).mark === 'got').length; return { n: qs.length, seen: seen.length, right: right.length, cards: cs.length, got }; };
+  const lessonStats = (d, l) => { const qs = vis(d.questions).filter(q => q.lesson === l.id); return { n: qs.length, right: qs.filter(q => (qRec(q.id) || {}).last === 1).length }; };
 
   function renderHome() {
     const last = prefs.get('lane');
@@ -120,31 +172,199 @@ __KIT_CSS__
     app.innerHTML = host.header(l.short, 'home', '', 'Back to lanes', '') +
       '<main class="wrap"><section class="card" style="display:grid;gap:10px"><h2 class="ttl" style="font-size:19px">' + esc(l.name) + '</h2><p class="note">' + esc(l.blurb) + '</p>' +
       (BANK.exam[l.id] ? '<p class="note"><b>The exam:</b> ' + esc(BANK.exam[l.id]) + '</p>' : '') + '</section>' + (l.leveled ? levelFilter() : '') +
-      (secs.length ? '<section aria-labelledby="sc-h"><div class="section-h"><h2 id="sc-h">Sections</h2></div><div class="card" style="padding-block:4px">' +
-        secs.map(s => '<div class="secrow" id="' + esc(l.id + '-' + s.id) + '"><div class="top"><b>' + esc(s.title) + '</b></div><span class="k">' + esc(s.kind) + '</span></div>').join('') + '</div></section>' : '') +
+      (secs.length ? '<section aria-labelledby="sc-h"><div class="section-h"><h2 id="sc-h">Sections</h2><span class="hint">Draft items are not yet reviewed</span></div><div class="card" style="padding-block:4px">' +
+        secs.map(s => { const d = s.kind === 'Deck' && deckById(s.deck), st = d && deckStats(d), simOn = s.kind === 'Simulation' && showFor(FCB);
+          return '<div class="secrow" id="' + esc(l.id + '-' + s.id) + '"><div class="top"><b>' + esc(s.title) + '</b><span class="k">' + esc(s.kind) + '</span></div><div class="items">' +
+            (d ? itemRow('#deck-' + d.id, d.title + ' deck', vis(d.lessons).length + ' lessons at your levels · ' + st.right + ' of ' + st.n + ' right', 'Draft')
+              : simOn ? itemRow(s.route, FCB.title, fcMeta(), FCB.status, FCB.levels) : hiddenNote(1)) + '</div></div>'; }).join('') + '</div></section>' : '') +
       (plan.length ? '<section aria-labelledby="pl-h"><div class="section-h"><h2 id="pl-h">Planned</h2><span class="hint">Not built yet</span></div><div class="card" style="padding-block:4px">' +
         plan.map(p => '<div class="secrow planrow"><div class="top"><b>' + esc(p.title) + '</b><span class="soon">Phase ' + p.phase + '</span></div><span class="k">' + esc(p.kind) + '</span></div>').join('') + '</div></section>' : '') +
       foot() + '</main>';
   }
+
+  // ---- decks
+  function renderDeck() {
+    const d = deckById(VIEW.id); if (!d) return host.go('home', {});
+    const st = deckStats(d), ls = vis(d.lessons);
+    app.innerHTML = host.header(d.title, 'lane', d.lane, 'Back to the ' + d.laneShort + ' lane', 'Draft') +
+      '<main class="wrap"><section class="card" style="display:grid;gap:10px"><div class="row"><span class="cchip draft">Draft</span><span class="lvchip">' + esc(d.laneShort) + '</span></div>' +
+      '<div class="stat"><div><span class="v">' + st.right + '/' + st.n + '</span><span class="l">questions right (last try)</span></div><div><span class="v">' + st.got + '/' + st.cards + '</span><span class="l">cards marked Got it</span></div></div>' +
+      '<div class="row"><button class="btn btn-primary" data-act="practice" data-id="' + d.id + '">Practice 10</button><a class="btn" href="#cards-' + d.id + '">Recall cards</a></div>' +
+      '<p class="note" id="deck-saved">' + esc(decks.statusText()) + '</p></section>' + levelFilter() +
+      '<section aria-labelledby="ls-h"><div class="section-h"><h2 id="ls-h">Lessons</h2><span class="hint">Tagged by level</span></div><div class="items">' +
+      ls.map(l => { const s = lessonStats(d, l); return itemRow('#lesson-' + l.id, l.title, s.n + ' questions · ' + s.right + ' right', l.status, l.levels); }).join('') + hiddenNote(d.lessons.length - ls.length) + '</div></section>' + foot() + '</main>';
+  }
+  function saveAnswer(id, right) { const r = qRec(id) || { n: 0, right: 0 }; decks.put(id, { ts: Date.now(), n: (r.n || 0) + 1, right: (r.right || 0) + (right ? 1 : 0), last: right ? 1 : 0 }); }
+  const PICKS = {};   // lesson answers shown on this visit
+  function questionCard(q, pick, act) {
+    const done = pick !== undefined;
+    return '<section class="card" style="display:grid;gap:10px" id="q-' + esc(q.id.toLowerCase()) + '"><div class="row"><span class="qid">' + esc(q.id) + '</span>' + draftChip(q) + '<span class="lvchip">' + esc(q.level) + '</span>' + lvChips(q.levels) + '</div><p class="stem">' + esc(q.stem) + '</p><div class="opts" role="group" aria-label="Options">' +
+      q.options.map((o, j) => { const cls = !done ? '' : j === q.answer ? ' is-correct' : j === pick ? ' is-wrong' : '';
+        return '<button class="opt' + cls + '" data-act="' + act + '" data-id="' + esc(q.id) + '" data-j="' + j + '"' + (done ? ' disabled' : '') + '><span class="key" aria-hidden="true">' + 'ABCD'[j] + '</span><span>' + esc(o) +
+          (done && j === q.answer ? '<span class="tag">Answer</span>' : done && j === pick ? '<span class="tag">Your pick</span>' : '') + '</span></button>'; }).join('') + '</div>' +
+      (done ? '<p class="verdict ' + (pick === q.answer ? 'ok' : 'bad') + '">' + (pick === q.answer ? 'Right' : 'Not quite') + '</p><p>' + esc(q.why) + '</p>' + (pick !== q.answer ? '<p class="note">' + esc(q.whyNot[pick]) + '</p>' : '') : '') + '</section>';
+  }
+  function renderLesson() {
+    const l = LESSONS[VIEW.id]; if (!l) return host.go('home', {});
+    const d = deckById(l.deck), i = d.lessons.findIndex(x => x.id === l.id), next = d.lessons[i + 1];
+    const qs = vis(d.questions).filter(q => q.lesson === l.id), qAll = d.questions.filter(q => q.lesson === l.id);
+    app.innerHTML = host.header(d.title, 'deck', d.id, 'Back to the ' + d.title + ' deck', (i + 1) + ' of ' + d.lessons.length) +
+      '<main class="wrap"><article class="card prose" style="display:grid;gap:12px"><div class="row">' + draftChip(l) + lvChips(l.levels) + '</div><h2 class="ttl" style="font-size:20px">' + esc(l.title) + '</h2>' +
+      l.body.map(p => '<p>' + esc(p) + '</p>').join('') +
+      (l.links.length ? '<h3 class="k">Linked from the other apps</h3><ul class="src">' + l.links.map(x => '<li><a href="' + esc(x[1]) + '" target="_blank" rel="noopener">' + esc(x[0]) + '</a></li>').join('') + '</ul>' : '') +
+      '<h3 class="k">Sources</h3><ul class="src">' + l.sources.map(s => '<li><a href="' + esc(s[1]) + '" target="_blank" rel="noopener">' + esc(s[0]) + '</a> <span class="lvchip">' + esc(s[2]) + '</span></li>').join('') + '</ul></article>' +
+      '<section aria-labelledby="lq-h" style="display:grid;gap:12px"><div class="section-h"><h2 id="lq-h">Check yourself</h2><span class="hint">' + qs.length + ' questions</span></div>' + qs.map(q => questionCard(q, PICKS[q.id], 'pick')).join('') + hiddenNote(qAll.length - qs.length) + '</section>' +
+      '<div class="row">' + (next ? '<a class="btn btn-primary" href="#lesson-' + esc(next.id) + '">Next: ' + esc(next.title) + '</a>' : '<button class="btn btn-primary" data-act="practice" data-id="' + d.id + '">Practice 10 from the deck</button>') + '<a class="btn" href="#deck-' + esc(d.id) + '">Back to the deck</a></div>' + foot() + '</main>';
+  }
+  // Practice: ten questions, unseen first, then last-wrong, then the rest; shuffled within each group.
+  function practiceSet(d) {
+    const sh = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+    const g = k => vis(d.questions).filter(q => { const r = qRec(q.id); return k === 0 ? !r : k === 1 ? r && r.last === 0 : r && r.last === 1; });
+    return [].concat(sh(g(0)), sh(g(1)), sh(g(2))).slice(0, 10).map(q => q.id);
+  }
+  function renderPractice() {
+    const d = deckById(VIEW.deck); if (!d || !VIEW.ids) return host.go('deck', { id: (d || DECKS[0]).id });
+    const ids = VIEW.ids, i = VIEW.i || 0, picks = VIEW.picks || {};
+    if (i >= ids.length) {
+      const right = ids.filter(id => picks[id] === QS[id].answer).length;
+      app.innerHTML = host.header('Practice', 'deck', d.id, 'Back to the deck', 'Done') + '<main class="wrap"><section class="card" style="display:grid;gap:10px"><h2 class="ttl" style="font-size:20px">' + right + ' of ' + ids.length + ' right</h2>' +
+        '<ul class="src">' + ids.map(id => '<li><a href="#lesson-' + esc(QS[id].lesson) + '">' + esc(id) + '</a> ' + (picks[id] === QS[id].answer ? '✓' : '✗ review ' + esc(LESSONS[QS[id].lesson].title)) + '</li>').join('') + '</ul>' +
+        '<div class="row"><button class="btn btn-primary" data-act="practice" data-id="' + d.id + '">Practice 10 more</button><a class="btn" href="#deck-' + d.id + '">Back to the deck</a></div></section>' + foot() + '</main>';
+      return;
+    }
+    const q = QS[ids[i]], pick = picks[q.id];
+    app.innerHTML = host.header('Practice · ' + d.title, 'deck', d.id, 'Back to the deck', (i + 1) + '/' + ids.length) + '<main class="wrap" style="display:grid;gap:12px">' + questionCard(q, pick, 'ppick') +
+      (pick !== undefined ? '<div class="row"><button class="btn btn-primary" data-act="pnext">' + (i + 1 < ids.length ? 'Next question' : 'See the result') + '</button><a class="btn btn-quiet" href="#lesson-' + esc(q.lesson) + '">Open the lesson</a></div>' : '') + foot() + '</main>';
+  }
+  const cardList = () => { const d = deckById(VIEW.id); return d ? vis(d.cards).filter(c => !VIEW.again || (decks.get(c.id) || {}).mark === 'again') : []; };
+  function renderCards() {
+    const d = deckById(VIEW.id); if (!d) return host.go('home', {});
+    const list = cardList(), i = Math.min(VIEW.i || 0, Math.max(0, list.length - 1)), c = list[i], st = deckStats(d);
+    app.innerHTML = host.header('Recall cards · ' + d.title, 'deck', d.id, 'Back to the deck', list.length ? (i + 1) + '/' + list.length : '0') +
+      '<main class="wrap" style="display:grid;gap:12px"><div class="row"><span class="cchip draft">Draft</span><span class="k">' + st.got + ' of ' + st.cards + ' marked Got it</span>' +
+      '<button class="tog" data-act="cards-only" aria-pressed="' + !!VIEW.again + '">Only cards marked Again</button></div>' +
+      (c ? '<section class="card flash" aria-live="polite"><span class="qid">' + esc(c.id) + '</span><div class="front">' + esc(c.front) + '</div>' + (VIEW.flip ? '<div class="back">' + esc(c.back) + '</div>' : '') + '</section>' +
+        (VIEW.flip ? '<div class="row"><button class="btn" data-act="card-mark" data-id="again">Again</button><button class="btn btn-primary" data-act="card-mark" data-id="got">Got it</button></div>'
+          : '<div class="row"><button class="btn btn-primary" data-act="card-flip">Show the answer</button><button class="btn btn-quiet" data-act="card-skip">Skip</button></div>')
+        : '<p class="note">No cards marked Again.</p>') +
+      '<p class="note" id="deck-saved">' + esc(decks.statusText()) + '</p>' + foot() + '</main>';
+  }
+
+  // ---- The forecast call (RTN-1, app-side engine math/forecast.js; Phase 1, approved Nov 28)
+  const FC_RV = 1, fcCur = v => v && v.rv === FC_RV ? v : undefined;
+  const fcGame = () => { const v = fcCur(fc.get('game')); return v && !v.done && Array.isArray(v.calls) ? JSON.parse(JSON.stringify(v)) : undefined; };
+  const fcMeta = () => { const g = fcGame(), b = fcCur(fc.get('best')); return g ? 'In progress · call ' + (g.calls.length + 1) + ' of ' + FD.calls.length : FD.calls.length + ' calls · ' + FD.deals.length + ' deals' + (b ? ' · best ' + b.score.toFixed(1) : ''); };
+  const repName = id => FD.reps.find(r => r.id === id).name;
+  const fcBack = () => { const p = prefs.get('lane'); return p && laneById(p.v) && (SECTIONS[p.v] || []).some(s => s.route === '#run-rtn-1') ? p.v : 'sales'; };
+  function renderFc() {
+    const g = fcGame();
+    if (g) { if (g.calls.length >= FD.calls.length) { fcFinish(g); return renderFc(); } return renderFcCall(g); }
+    if (VIEW.debrief && fcCur(fc.get('last'))) return renderFcDebrief(fcCur(fc.get('last')));
+    const last = fcCur(fc.get('last')), back = fcBack();
+    app.innerHTML = host.header(FCB.title, 'lane', back, 'Back to the lane', 'Draft') + '<main class="wrap" style="display:grid;gap:12px"><section class="card prose" style="display:grid;gap:10px"><div class="row">' + draftChip(FCB) + '<span class="lvchip">Simulation</span>' + lvChips(FCB.levels) + '</div>' +
+      FCB.briefing.map(p => '<p>' + esc(p) + '</p>').join('') + '</section>' +
+      '<section class="card" style="display:grid;gap:10px"><div class="row"><button class="btn btn-primary" data-act="fc-start">Start call 1</button>' + (last ? '<button class="btn" data-act="fc-debrief">Last run\'s debrief</button>' : '') + '</div>' +
+      '<p class="note" id="fc-saved">' + esc(fc.statusText()) + '</p></section>' + foot() + '</main>';
+  }
+  const won = d => d.outcome === 'won';
+  function renderFcCall(g) {
+    const t = g.calls.length, week = FD.calls[t], open = FE.open(FD, t), sel = VIEW.sel || {};
+    let closed = 0; for (const d of FD.deals) if (won(d) && FE.lastCall(d) < t) closed += d.amount;
+    const prev = t ? FE.open(FD, t - 1).filter(d => FE.lastCall(d) === t - 1) : [];
+    const commit = open.filter(d => sel[d.id] === 'C').reduce((a, d) => a + d.amount, 0), best = open.filter(d => sel[d.id] === 'B').reduce((a, d) => a + d.amount, 0);
+    const left = open.filter(d => !sel[d.id]).length, fresh = open.filter(d => d.first === t && t > 0);
+    const chk = (v, y, n) => '<span class="chk ' + (v ? 'y' : 'n') + '">' + (v ? '✓ ' + y : '✗ ' + n) + '</span>';
+    app.innerHTML = host.header(FCB.title, 'lane', fcBack(), 'Back to the lane', 'Call ' + (t + 1) + ' of ' + FD.calls.length) + '<main class="wrap" style="display:grid;gap:12px">' +
+      '<section class="card" style="display:grid;gap:10px" aria-live="polite"><h2 class="ttl" style="font-size:18px">Week ' + week + ' forecast call</h2><div class="stat" id="fc-status">' +
+      [['Closed so far', usd(closed)], ['Your number (Closed + Commit)', usd(closed + commit)], ['Best Case Forecast', usd(closed + commit + best)], ['Plan', usd(FD.plan)]]
+        .map(x => '<div><span class="v">' + esc(x[1]) + '</span><span class="l">' + esc(x[0]) + '</span></div>').join('') + '</div>' +
+      (prev.length ? '<p class="note" id="fc-moved">Since the last call: ' + prev.map(d => esc(d.name) + ' ' + (won(d) ? 'won (' + usd(d.amount) + ')' : 'lost')).join('; ') + '.</p>' : '') +
+      (fresh.length ? '<p class="note">New this call: ' + fresh.map(d => esc(d.name)).join(', ') + '.</p>' : '') +
+      '<div class="row"><button class="btn" data-act="fc-reps">Start from the reps\' calls</button></div></section>' +
+      '<section aria-labelledby="fcd-h" style="display:grid;gap:10px"><div class="section-h"><h2 id="fcd-h">Open deals</h2><span class="hint">' + open.length + ' to call</span></div>' +
+      open.map(d => { const r = FE.rowAt(d, t);
+        return '<div class="deal" id="deal-' + esc(d.id.toLowerCase()) + '"><div class="hd"><b>' + esc(d.name) + '</b><span class="amt">' + usd(d.amount) + '</span></div>' +
+          '<div class="facts"><span>' + esc(repName(d.rep)) + '\'s call: <b>' + esc(FE.NAMES[r[0]]) + '</b></span><span>' + esc(FD.stages[r[1]]) + '</span><span>Close date moved ' + r[2] + '×</span><span>Buyer replied ' + r[3] + ' days ago</span></div>' +
+          '<div class="facts">' + chk(r[4], 'critical event confirmed', 'no confirmed critical event') + chk(r[5], 'decision process known', 'decision process unknown') + '</div>' +
+          '<p class="note">' + esc(r[6]) + '</p>' +
+          '<div class="cats" role="group" aria-label="Category for ' + esc(d.name) + '">' + FE.CATS.map(c => '<button class="tog" data-act="fc-pick" data-id="' + esc(d.id) + '" data-c="' + c + '" aria-pressed="' + (sel[d.id] === c) + '">' + esc(FE.NAMES[c]) + '</button>').join('') + '</div></div>'; }).join('') + '</section>' +
+      '<section class="card" style="display:grid;gap:8px"><p class="left" id="fc-left">' + (left ? left + ' deal' + (left === 1 ? '' : 's') + ' still to call.' : 'Every open deal has a category.') + '</p>' +
+      '<div class="row"><button class="btn btn-primary" data-act="fc-lock">Lock in call ' + (t + 1) + '</button><button class="btn btn-quiet" data-act="fc-quit">Abandon this run</button></div><p class="note" id="fc-saved">' + esc(fc.statusText()) + '</p></section>' + foot() + '</main>';
+  }
+  function fcFinish(g) {
+    const st = FE.stats(FD, FE.play(FD, { calls: g.calls })), b = fcCur(fc.get('best'));
+    fc.put('last', { ts: Date.now(), rv: FC_RV, calls: g.calls });
+    if (!b || st.score > b.score) fc.put('best', { ts: Date.now(), rv: FC_RV, score: st.score });
+    fc.put('game', { ts: Date.now(), rv: FC_RV, done: true });
+    VIEW = { debrief: true };
+  }
+  const REF_NAMES = { hindsight: 'Best in hindsight', perRep: 'Best adjustment of each rep', reps: 'The reps\' own calls', commitNone: 'Commit nothing', commitAll: 'Commit everything' };
+  function renderFcDebrief(last) {
+    const r = FE.play(FD, { calls: last.calls }), st = FE.stats(FD, r), best = fcCur(fc.get('best')), reps = FCB.ref.find(x => x.k === 'reps');
+    const rows = [['You', st.score]].concat(FCB.ref.map(x => [REF_NAMES[x.k], x.score])).sort((a, b) => b[1] - a[1]);
+    const outcome = d => d.outcome === 'won' ? 'Won, week ' + d.endWeek : d.outcome === 'lost' ? 'Lost, week ' + d.endWeek : 'Slipped';
+    const L = id => LESSONS[id] ? '<li><a href="#lesson-' + esc(id) + '">' + esc(FCB.links.find(l => l[0] === id)[1]) + '</a></li>' : '';
+    app.innerHTML = host.header('Debrief · ' + FCB.title, 'lane', fcBack(), 'Back to the lane', FD.calls.length + ' calls') + '<main class="wrap" style="display:grid;gap:12px">' +
+      '<section class="card" style="display:grid;gap:10px"><div class="row">' + draftChip(FCB) + '</div><div class="stat" id="fc-score">' +
+      [['Your score', st.score.toFixed(1)], ['The reps\' calls', reps.score.toFixed(1)], ['Closed this quarter', usd(st.actual)], ['Your best so far', best ? best.score.toFixed(1) : '—']]
+        .map(x => '<div><span class="v">' + esc(x[1]) + '</span><span class="l">' + esc(x[0]) + '</span></div>').join('') + '</div></section>' +
+      '<section class="card scroll" style="padding:4px 8px"><table class="t" id="fc-compare"><thead><tr><th>Plan</th><th>Score</th></tr></thead><tbody>' +
+      rows.map(x => '<tr' + (x[0] === 'You' ? ' style="font-weight:700"' : '') + '><td>' + esc(x[0]) + '</td><td>' + x[1].toFixed(1) + '</td></tr>').join('') + '</tbody></table></section>' +
+      '<section aria-labelledby="ceo-h"><div class="section-h"><h2 id="ceo-h">Your number for the CEO</h2><span class="hint">Closed + Commit · actual ' + esc(usd(st.actual)) + '</span></div><div class="card scroll" style="padding:4px 8px"><table class="t" id="fc-ceo"><thead><tr><th>Week</th><th>You</th><th>Reps</th><th>Best case</th></tr></thead><tbody>' +
+      FD.calls.map((w, k) => '<tr><td>' + w + '</td><td>' + usd(r.h.ceo[k]) + '</td><td>' + usd(reps.ceo[k]) + '</td><td>' + usd(r.h.bestCase[k]) + '</td></tr>').join('') + '</tbody></table></div></section>' +
+      '<section aria-labelledby="out-h"><div class="section-h"><h2 id="out-h">What happened</h2><span class="hint">Your calls, week by week</span></div><div class="card scroll" style="padding:4px 8px"><table class="t" id="fc-deals"><thead><tr><th>Deal</th><th>Amount</th><th>Outcome</th><th>Your calls</th></tr></thead><tbody>' +
+      FD.deals.map(d => '<tr><td>' + esc(d.name) + ' <span class="k">' + esc(repName(d.rep).split(' ')[0]) + '</span></td><td>' + usd(d.amount) + '</td><td>' + outcome(d) + '</td><td>' + d.rows.map((x, i) => (last.calls[d.first + i] || {})[d.id] || '—').join(' ') + '</td></tr>').join('') + '</tbody></table></div><p class="note">C Commit, B Best case, P Pipeline, D Drop.</p></section>' +
+      '<article class="card prose" style="display:grid;gap:10px"><h2 class="ttl" style="font-size:18px">What the numbers say</h2>' + FCB.lesson.map(p => '<p>' + esc(p) + '</p>').join('') +
+      '<h3 class="k">Read next</h3><ul>' + FCB.links.map(l => L(l[0])).join('') + FCB.outside.map(x => '<li><a href="' + esc(x[1]) + '" target="_blank" rel="noopener">' + esc(x[0]) + '</a></li>').join('') + '</ul>' +
+      '<h3 class="k">Sources</h3><ul class="src">' + FCB.sources.map(x => '<li><a href="' + esc(x[1]) + '" target="_blank" rel="noopener">' + esc(x[0]) + '</a> <span class="lvchip">' + esc(x[2]) + '</span></li>').join('') + '</ul></article>' +
+      '<div class="row"><button class="btn btn-primary" data-act="fc-again">Play again</button><a class="btn" href="#lane-' + esc(fcBack()) + '">Back to the lane</a></div>' + foot() + '</main>';
+  }
+
   function foot() {
     const t = theme();
     return '<footer class="foot"><div class="row"><span>Theme:</span>' + ['system', 'light', 'dark'].map(x => '<button class="tog" data-act="theme" data-id="' + x + '" aria-pressed="' + (t === x) + '">' + x[0].toUpperCase() + x.slice(1) + '</button>').join('') + '</div>' +
       '<p>Engines: study-kit ' + esc(BANK.kitVersion) + '. Claude grading and role-plays work when this page is open in Claude; everything else works without it.</p></footer>';
   }
 
-  const SCREENS = Object.assign({ home: renderHome, lane: renderLane }, craft.screens, sims.screens);
+  const SCREENS = Object.assign({ home: renderHome, lane: renderLane, deck: renderDeck, lesson: renderLesson, practice: renderPractice, cards: renderCards, fc: renderFc }, craft.screens, sims.screens);
   const ACT = Object.assign({
     home() { history.replaceState(null, '', location.pathname + location.search); host.go('home', {}); },
     lane(t) { const l = laneById(t.dataset.id); if (!l || !l.active) return; prefs.put('lane', { ts: Date.now(), v: l.id }); history.replaceState(null, '', '#lane-' + l.id); host.go('lane', { id: l.id }); },
+    deck(t) { history.replaceState(null, '', '#deck-' + t.dataset.id); host.go('deck', { id: t.dataset.id }); },
     level(t) { const id = t.dataset.id, on = levels(), i = on.indexOf(id); if (i === -1) on.push(id); else if (on.length > 1) on.splice(i, 1); else return host.toast('Keep at least one level on.'); prefs.put('levels', { ts: Date.now(), v: ALL.filter(x => on.indexOf(x) !== -1) }); host.keepScroll(); },
-    theme(t) { try { localStorage.setItem(THEME_KEY, t.dataset.id); } catch (e) { /* storage unavailable */ } applyTheme(t.dataset.id); host.keepScroll(); }
+    theme(t) { try { localStorage.setItem(THEME_KEY, t.dataset.id); } catch (e) { /* storage unavailable */ } applyTheme(t.dataset.id); host.keepScroll(); },
+    pick(t) { const q = QS[t.dataset.id]; if (!q || PICKS[q.id] !== undefined) return; const j = +t.dataset.j; PICKS[q.id] = j; saveAnswer(q.id, j === q.answer); host.keepScroll(); },
+    practice(t) { const d = deckById(t.dataset.id); history.replaceState(null, '', '#practice-' + d.id); host.go('practice', { deck: d.id, ids: practiceSet(d), i: 0, picks: {} }); },
+    ppick(t) { const q = QS[t.dataset.id]; if (!q || VIEW.picks[q.id] !== undefined) return; const j = +t.dataset.j; VIEW.picks[q.id] = j; saveAnswer(q.id, j === q.answer); host.keepScroll(); },
+    pnext() { VIEW.i = (VIEW.i || 0) + 1; host.render(); window.scrollTo(0, 0); },
+    'card-flip'() { VIEW.flip = true; host.keepScroll(); },
+    'card-skip'() { VIEW.flip = false; VIEW.i = ((VIEW.i || 0) + 1) % Math.max(1, cardList().length); host.keepScroll(); },
+    'card-mark'(t) { const list = cardList(), c = list[Math.min(VIEW.i || 0, list.length - 1)]; if (!c) return;
+      decks.put(c.id, { ts: Date.now(), mark: t.dataset.id }); VIEW.flip = false;
+      if (!(VIEW.again && t.dataset.id === 'got')) VIEW.i = (VIEW.i || 0) + 1;   // in "Again only", a card marked Got it leaves the list
+      if (VIEW.i >= cardList().length) VIEW.i = 0; host.keepScroll(); },
+    'cards-only'() { VIEW.again = !VIEW.again; VIEW.i = 0; VIEW.flip = false; host.keepScroll(); },
+    'fc-start'() { fc.put('game', { ts: Date.now(), rv: FC_RV, calls: [] }); host.go('fc', { sel: {} }); },
+    'fc-pick'(t) { if (!fcGame()) return; VIEW.sel = Object.assign({}, VIEW.sel || {}); VIEW.sel[t.dataset.id] = t.dataset.c; host.keepScroll(); },
+    'fc-reps'() { const g = fcGame(); if (!g) return; const tt = g.calls.length, sel = {}; for (const d of FE.open(FD, tt)) sel[d.id] = FE.rowAt(d, tt)[0]; VIEW.sel = sel; host.keepScroll(); },
+    'fc-lock'() { const g = fcGame(); if (!g) return; const tt = g.calls.length, sel = VIEW.sel || {}, open = FE.open(FD, tt);
+      if (open.some(d => FE.CATS.indexOf(sel[d.id]) === -1)) return host.toast('Put every open deal in a category first.');
+      const m = {}; open.forEach(d => { m[d.id] = sel[d.id]; }); g.calls.push(m); g.ts = Date.now(); fc.put('game', g); VIEW.sel = {}; host.render(); window.scrollTo(0, 0); },
+    'fc-debrief'() { host.go('fc', { debrief: true }); },
+    'fc-again'() { host.go('fc', {}); },
+    'fc-quit'() { host.confirm('Abandon this run?', 'Your calls so far are discarded.', 'Abandon', () => { fc.put('game', { ts: Date.now(), rv: FC_RV, done: true }); host.go('fc', {}); }); }
   }, craft.actions, sims.actions);
   function render() { (SCREENS[SCREEN] || renderHome)(); }
 
-  // Routes: dash form only (#lane-sales). Craft and Simulations route their own (#craft, #sims).
+  // Routes: dash form only. Craft and Simulations route their own (#craft, #sims).
   function route(h) {
-    const m = /^#lane-([a-z0-9-]+)$/.exec(h || '');
-    if (m) { const l = laneById(m[1]); if (l && l.active) { host.go('lane', { id: l.id }); return true; } host.go('home', {}); return true; }
+    let m;
+    if ((m = /^#lane-([a-z0-9-]+)$/.exec(h || ''))) { const l = laneById(m[1]); if (l && l.active) { host.go('lane', { id: l.id }); return true; } host.go('home', {}); return true; }
+    if ((m = /^#deck-([a-z0-9-]+)$/.exec(h || '')) && deckById(m[1])) { host.go('deck', { id: m[1] }); return true; }
+    if ((m = /^#cards-([a-z0-9-]+)$/.exec(h || '')) && deckById(m[1])) { host.go('cards', { id: m[1], i: 0 }); return true; }
+    if ((m = /^#practice-([a-z0-9-]+)$/.exec(h || '')) && deckById(m[1])) { const d = deckById(m[1]); host.go('practice', { deck: d.id, ids: practiceSet(d), i: 0, picks: {} }); return true; }
+    if ((m = /^#lesson-([a-z][a-z0-9]*-\d+)$/.exec(h || '')) && LESSONS[m[1]]) { host.go('lesson', { id: m[1] }); return true; }
+    if (h === '#run-rtn-1') { host.go('fc', { sel: {} }); return true; }
     return craft.route(h) || sims.route(h);
   }
   document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t || t.disabled) return; const fn = ACT[t.dataset.act]; if (fn) fn(t, e); });
@@ -160,13 +380,13 @@ __KIT_CSS__
   (async () => {
     const C = window.claude;
     if (!C || typeof C.use !== 'function') return;
-    try { const fn = await C.use('sample'); if (typeof fn === 'function') { SAMPLE = fn; if (SCREEN !== 'home' && SCREEN !== 'lane') host.keepScroll(); } } catch (e) { /* not granted */ }
+    try { const fn = await C.use('sample'); if (typeof fn === 'function') { SAMPLE = fn; if (['craft', 'packet', 'stage', 'sims', 'run', 'rp'].indexOf(SCREEN) !== -1) host.keepScroll(); } } catch (e) { /* not granted */ }
     try {
       const db = await C.use('db'), user = await C.use('user'), uid = user && await user.id();
-      if (db && uid) { prefs.attach(db, uid); craft.attach(db, uid); sims.attach(db, uid); if (SCREEN === 'home' || SCREEN === 'lane') host.keepScroll(); }
+      if (db && uid) { prefs.attach(db, uid); decks.attach(db, uid); fc.attach(db, uid); craft.attach(db, uid); sims.attach(db, uid); if (SCREEN === 'home' || SCREEN === 'lane') host.keepScroll(); }
     } catch (e) { /* saved on this device only */ }
   })();
-  window.__rr = { craft, sims, prefs, host };
+  window.__rr = { craft, sims, prefs, decks, fc, host };
 })();
 </script>
 </body>

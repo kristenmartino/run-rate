@@ -16,8 +16,14 @@ Revenue study app: sales leadership (including Chief Sales Officer), revenue ope
 - Boundaries (link, never copy; check each address exists in the other repo): metric formulas (win rate, CAC payback, LTV:CAC, NRR, GRR, pipeline coverage) live in Dry Run (Decision 22); pricing, gtm, revrec, contract and o2c and the negotiation cases live in Going Concern; operating cadence and S&OP live in Throughput (decks coo1 and coo3), and Run Rate covers the revenue side of the cadence; board communication is Blast Radius's module; procurement negotiation is Critical Path's.
 - One branch per phase; open the pull request with `gh api` (`gh pr create` is refused); never push to main or force-push; publish from the branch; merge only on Kristen's word.
 
+## Content (Phase 1, Draft)
+- Decks: `content/fc1.js` (Sales forecasting, Sales leadership lane) and `content/rc1.js` (Revenue operating cadence, Chief Revenue Officer lane). Sources in `content/sources.js`; links into other apps in `content/outside.js` (each address checked in that repo).
+- The forecast call RTN-1 (`#run-rtn-1`): data `data/forecast.json`, engine `math/forecast.js`, independent twin `math/forecast.py`, text `content/forecast.js`. `math/check.js` compares 400 random plans and every reference plan on every build; `build.js` asserts each debrief claim.
+- Deck numbers: `math/numbers.js` with twin `math/numbers.py`.
+- Blind check record: `docs/blind-check-phase1.md`.
+
 ## Build and test
 ```sh
-node build.js        # build/index.html
-node test.js         # Playwright: 360/390/414 px in light and dark, lane picker, routes, level filter, confirm dialog, idle-write check
+node build.js        # build/index.html (runs the JS/Python cross-check, under a second)
+node test.js         # Playwright: every screen at 360/390/414 px in light and dark, decks, keyed answers, sim runs, level filter, confirm dialog, idle-write check
 ```

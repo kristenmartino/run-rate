@@ -1,0 +1,80 @@
+{
+ "note": "The forecast call (RTN-1). One fixed quarter: no chance anywhere. Company, reps and deals are fictional. Each row is one forecast call while the deal is open: [rep's category, stage, close-date pushes so far, days since the buyer last replied, critical event confirmed (1/0), decision process known (1/0), note]. Categories: C Commit, B Best case, P Pipeline, D Drop. Outcome: won or lost in endWeek, or slip (still open at quarter end, closes next quarter).",
+ "company": "Halyard Analytics",
+ "calls": [2, 4, 6, 8, 10, 12],
+ "endWeek": 13,
+ "plan": 1200000,
+ "stages": ["", "Discovery", "Solution", "Proposal", "Negotiation", "Contract"],
+ "reps": [
+  { "id": "mara", "name": "Mara Quinn" },
+  { "id": "theo", "name": "Theo Brandt" },
+  { "id": "lena", "name": "Lena Ortiz" }
+ ],
+ "deals": [
+  { "id": "D1", "name": "Northbeam Freight", "rep": "mara", "amount": 240000, "first": 0, "outcome": "won", "endWeek": 9, "rows": [
+   ["C", 3, 0, 2, 1, 0, "Proposal sent; CFO meeting set for week 3"],
+   ["C", 4, 0, 1, 1, 1, "Redlines back from legal; the customer's own go-live deadline is quarter end"],
+   ["C", 4, 0, 3, 1, 1, "Procurement started; signing planned for week 9"],
+   ["C", 5, 0, 1, 1, 1, "Order form with the CFO for signature"]] },
+  { "id": "D2", "name": "Bramble Health", "rep": "mara", "amount": 180000, "first": 0, "outcome": "slip", "endWeek": null, "rows": [
+   ["C", 3, 0, 4, 0, 0, "Champion loved the demo; no date from the buyer yet"],
+   ["C", 3, 0, 9, 0, 0, "Champion on leave for two weeks"],
+   ["C", 3, 1, 15, 0, 0, "Close date moved from week 8 to week 12"],
+   ["C", 4, 1, 6, 0, 1, "The buyer's IT team added a security review"],
+   ["B", 4, 2, 12, 0, 1, "Close date moved to week 2 of next quarter"],
+   ["B", 4, 2, 18, 0, 1, "Buyer says the budget opens next quarter"]] },
+  { "id": "D3", "name": "Corvid Retail", "rep": "mara", "amount": 95000, "first": 0, "outcome": "lost", "endWeek": 11, "rows": [
+   ["C", 2, 0, 5, 0, 0, "Strong first call; rep expects a fast close"],
+   ["C", 3, 0, 7, 0, 0, "Proposal sent; buyer comparing two vendors"],
+   ["C", 3, 1, 10, 0, 1, "Close date moved two weeks; a competitor came in lower"],
+   ["B", 3, 1, 14, 0, 1, "Buyer asked for a 30% discount"],
+   ["B", 3, 2, 21, 0, 1, "No reply to the revised offer"]] },
+  { "id": "D4", "name": "Dunmore Energy", "rep": "mara", "amount": 60000, "first": 0, "outcome": "won", "endWeek": 13, "rows": [
+   ["P", 2, 0, 3, 1, 0, "The incumbent's contract ends in week 13"],
+   ["B", 3, 0, 2, 1, 0, "Proposal sent"],
+   ["B", 3, 0, 4, 1, 1, "Decision committee named; it votes in week 12"],
+   ["B", 4, 0, 2, 1, 1, "Terms agreed in principle"],
+   ["C", 4, 0, 1, 1, 1, "Paperwork with the buyer's legal team"],
+   ["C", 5, 0, 2, 1, 1, "Signature expected in week 13"]] },
+  { "id": "D5", "name": "Elm Street Bank", "rep": "theo", "amount": 320000, "first": 0, "outcome": "won", "endWeek": 11, "rows": [
+   ["P", 2, 0, 2, 0, 1, "Buying process mapped with the COO; a regulator deadline is rumored, not confirmed"],
+   ["P", 3, 0, 3, 1, 1, "Regulator deadline in week 12 confirmed; proposal accepted as the basis for the contract"],
+   ["B", 4, 0, 1, 1, 1, "Legal review under way; no open business issues"],
+   ["B", 4, 0, 2, 1, 1, "Final pricing approved by the buyer's CFO"],
+   ["C", 5, 0, 1, 1, 1, "Contract out for signature"]] },
+  { "id": "D6", "name": "Fernhill Labs", "rep": "theo", "amount": 140000, "first": 0, "outcome": "won", "endWeek": 5, "rows": [
+   ["B", 4, 0, 1, 1, 1, "Verbal yes; purchase order being raised"],
+   ["B", 5, 0, 2, 1, 1, "Purchase order approved; waiting on countersignature"]] },
+  { "id": "D7", "name": "Granite Mutual", "rep": "theo", "amount": 75000, "first": 0, "outcome": "slip", "endWeek": null, "rows": [
+   ["P", 2, 0, 6, 0, 0, "Exploring; no budget owner identified"],
+   ["P", 2, 0, 12, 0, 0, "No reply since the discovery call"],
+   ["P", 2, 1, 20, 0, 0, "Close date moved to week 13"],
+   ["D", 2, 2, 25, 0, 0, "Close date moved to next quarter"],
+   ["D", 2, 2, 30, 0, 0, "Still no reply"],
+   ["D", 2, 2, 34, 0, 0, "Still no reply"]] },
+  { "id": "D8", "name": "Harbor Logistics", "rep": "theo", "amount": 210000, "first": 2, "outcome": "won", "endWeek": 13, "rows": [
+   ["P", 3, 0, 2, 1, 1, "Pulled in from next quarter: the buyer wants it live before peak season"],
+   ["B", 4, 0, 1, 1, 1, "Terms agreed; legal review started"],
+   ["B", 4, 0, 2, 1, 1, "Legal review on track for week 12"],
+   ["C", 5, 0, 1, 1, 1, "Signature booked for week 13"]] },
+  { "id": "D9", "name": "Ironbark Foods", "rep": "lena", "amount": 400000, "first": 0, "outcome": "slip", "endWeek": null, "rows": [
+   ["B", 3, 0, 3, 1, 0, "Proposal sent; budget approved in principle"],
+   ["B", 3, 0, 5, 1, 0, "Waiting to meet the economic buyer"],
+   ["B", 4, 0, 6, 1, 0, "Economic buyer meeting moved twice"],
+   ["B", 4, 1, 9, 0, 0, "New CEO at the customer; large purchases on hold; close date moved to week 13"],
+   ["D", 4, 2, 14, 0, 0, "Close date moved to next quarter"],
+   ["D", 4, 2, 16, 0, 0, "On hold until the new CEO sets priorities"]] },
+  { "id": "D10", "name": "Juniper Schools", "rep": "lena", "amount": 110000, "first": 0, "outcome": "won", "endWeek": 7, "rows": [
+   ["B", 3, 0, 2, 1, 1, "The school board votes on the purchase in week 6"],
+   ["C", 4, 0, 1, 1, 1, "Vote on the board's agenda; terms agreed"],
+   ["C", 5, 0, 1, 1, 1, "Board approved; contract with the district's lawyer"]] },
+  { "id": "D11", "name": "Kestrel Media", "rep": "lena", "amount": 50000, "first": 0, "outcome": "lost", "endWeek": 5, "rows": [
+   ["P", 2, 0, 8, 0, 0, "Price-shopping; asked for a quote only"],
+   ["D", 2, 0, 15, 0, 0, "Buyer stopped replying after the quote"]] },
+  { "id": "D12", "name": "Larch Insurance", "rep": "lena", "amount": 160000, "first": 2, "outcome": "lost", "endWeek": 13, "rows": [
+   ["B", 3, 0, 3, 1, 0, "New deal: buyer says the budget must be spent this quarter"],
+   ["P", 3, 0, 8, 1, 0, "No decision process yet; three departments involved"],
+   ["P", 3, 1, 12, 0, 0, "Close date moved; the budget deadline turned out to be a guideline"],
+   ["D", 3, 1, 17, 0, 0, "Buyer chose to wait"]] }
+ ]
+}
